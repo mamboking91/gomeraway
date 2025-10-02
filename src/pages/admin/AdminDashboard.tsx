@@ -39,20 +39,32 @@ const fetchAdminStats = async (): Promise<DashboardStats> => {
   const totalUsers = users?.length || 0;
   const totalHosts = users?.filter(u => u.role === 'host' || u.role === 'admin').length || 0;
 
-  // 2. Contar suscripciones activas
-  const { data: subscriptions, error: subsError } = await supabase
-    .from('subscriptions')
-    .select('plan, status');
+  // 2. Contar suscripciones activas (opcional - tabla puede no existir)
+  let activeSubscriptions = 0;
+  let subscriptionsByPlan = { basico: 0, premium: 0, diamante: 0 };
+  
+  try {
+    const { data: subscriptions, error: subsError } = await supabase
+      .from('subscriptions')
+      .select('plan, status');
 
-  if (subsError) throw subsError;
-
-  const activeSubscriptions = subscriptions?.filter(s => s.status === 'active').length || 0;
-
-  const subscriptionsByPlan = {
-    basico: subscriptions?.filter(s => s.status === 'active' && s.plan?.toLowerCase().includes('básico')).length || 0,
-    premium: subscriptions?.filter(s => s.status === 'active' && s.plan?.toLowerCase() === 'premium').length || 0,
-    diamante: subscriptions?.filter(s => s.status === 'active' && s.plan?.toLowerCase() === 'diamante').length || 0,
-  };
+    if (!subsError && subscriptions) {
+      activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
+      
+      // Contar por plan
+      subscriptions.forEach(sub => {
+        if (sub.status === 'active') {
+          const planKey = sub.plan.toLowerCase().replace('á', 'a') as keyof typeof subscriptionsByPlan;
+          if (subscriptionsByPlan[planKey] !== undefined) {
+            subscriptionsByPlan[planKey]++;
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('Subscriptions table not available:', error);
+    // Continue without subscriptions data
+  }
 
   // 3. Contar listings
   const { data: listings, error: listingsError } = await supabase
@@ -123,12 +135,14 @@ const AdminDashboard: React.FC = () => {
   if (error) {
     return (
       <AdminLayout>
-        <div className="text-center py-12">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Error cargando estadísticas</h2>
-          <p className="text-muted-foreground">
-            {error instanceof Error ? error.message : 'Error desconocido'}
-          </p>
+        <div className="space-y-6">
+          <div className="text-center py-12">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Error cargando estadísticas</h2>
+            <p className="text-muted-foreground">
+              {error instanceof Error ? error.message : 'Error desconocido'}
+            </p>
+          </div>
         </div>
       </AdminLayout>
     );

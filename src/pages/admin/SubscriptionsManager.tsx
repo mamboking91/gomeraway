@@ -48,24 +48,48 @@ interface Subscription {
 }
 
 const fetchSubscriptions = async (): Promise<Subscription[]> => {
-  // Obtener suscripciones con información completa de usuarios
-  const { data: subscriptions, error } = await supabase
-    .from('subscriptions')
-    .select(`
-      *,
-      profiles:user_id (
-        full_name,
-        email,
-        phone
-      )
-    `)
-    .order('created_at', { ascending: false });
+  try {
+    // Obtener suscripciones básicas primero
+    const { data: subscriptions, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) throw error;
+    if (error) {
+      console.error('Subscriptions query error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // If table doesn't exist, return empty array
+      if (error.code === '42P01') { // relation does not exist
+        console.warn('Subscriptions table does not exist');
+        return [];
+      }
+      throw error;
+    }
+
+  // Para cada suscripción, obtener información del perfil
+  const subscriptionsWithProfiles = await Promise.all(
+    (subscriptions || []).map(async (sub) => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', sub.user_id)
+        .single();
+
+      return {
+        ...sub,
+        profiles: profile || null,
+      };
+    })
+  );
 
   // Para cada suscripción, obtener métricas completas
   const subscriptionsWithMetrics = await Promise.all(
-    (subscriptions || []).map(async (sub) => {
+    subscriptionsWithProfiles.map(async (sub) => {
       // Contar anuncios activos
       const { data: listings } = await supabase
         .from('listings')
@@ -94,7 +118,11 @@ const fetchSubscriptions = async (): Promise<Subscription[]> => {
     })
   );
 
-  return subscriptionsWithMetrics;
+    return subscriptionsWithMetrics;
+  } catch (error) {
+    console.warn('Error fetching subscriptions:', error);
+    return [];
+  }
 };
 
 const SubscriptionsManager: React.FC = () => {

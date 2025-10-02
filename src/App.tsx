@@ -20,6 +20,7 @@ import EditListing from "./pages/EditListing";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import SubscriptionsManager from "./pages/admin/SubscriptionsManager";
 import ListingsManager from "./pages/admin/ListingsManager";
+import UsersManager from "./pages/admin/UsersManager";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/subscriptions" element={<SubscriptionsManager />} />
             <Route path="/admin/listings" element={<ListingsManager />} />
+            <Route path="/admin/users" element={<UsersManager />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

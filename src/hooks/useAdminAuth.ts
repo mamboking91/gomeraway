@@ -37,7 +37,16 @@ export const useAdminAuth = () => {
         .single();
 
       if (error) {
-        console.error('Error checking admin status:', error);
+        console.error('Error checking admin status:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          userId: user.id,
+          userEmail: user.email
+        });
+        
+        
         setState({
           user,
           isAdmin: false,
