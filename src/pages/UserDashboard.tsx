@@ -29,7 +29,7 @@ const fetchUserStats = async (userId: string) => {
   const stats = {
     totalBookings: bookings?.length || 0,
     confirmedBookings: bookings?.filter(b => b.status === 'confirmed').length || 0,
-    pendingBookings: bookings?.filter(b => b.status === 'pending').length || 0,
+    pendingBookings: bookings?.filter(b => b.status === 'pending_confirmation').length || 0,
     totalSpent: bookings?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0,
   };
 

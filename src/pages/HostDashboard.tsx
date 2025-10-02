@@ -68,6 +68,74 @@ const fetchHostListings = async (hostId: string) => {
   return listingsWithDetails;
 };
 
+// Función para obtener estadísticas del host
+const fetchHostStats = async (hostId: string) => {
+  // Obtener IDs de los listings del host
+  const { data: hostListings, error: listingsError } = await supabase
+    .from('listings')
+    .select('id')
+    .eq('host_id', hostId);
+
+  if (listingsError) throw listingsError;
+
+  if (!hostListings || hostListings.length === 0) {
+    return {
+      pendingBookings: 0,
+      totalBookings: 0,
+      monthlyRevenue: 0,
+      totalGuests: 0,
+    };
+  }
+
+  const listingIds = hostListings.map(listing => listing.id);
+
+  // Obtener todas las reservas para los listings del host
+  const { data: bookings, error: bookingsError } = await supabase
+    .from('bookings')
+    .select('*')
+    .in('listing_id', listingIds);
+
+  if (bookingsError) throw bookingsError;
+
+  if (!bookings) {
+    return {
+      pendingBookings: 0,
+      totalBookings: 0,
+      monthlyRevenue: 0,
+      totalGuests: 0,
+    };
+  }
+
+  // Calcular estadísticas
+  const pendingBookings = bookings.filter(b => b.status === 'pending_confirmation').length;
+  const totalBookings = bookings.length;
+  
+  // Ingresos de este mes (solo reservas confirmadas)
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthlyRevenue = bookings
+    .filter(b => {
+      if (b.status !== 'confirmed') return false;
+      const bookingDate = new Date(b.created_at);
+      return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  // Huéspedes únicos (solo reservas confirmadas)
+  const uniqueGuests = new Set(
+    bookings
+      .filter(b => b.status === 'confirmed')
+      .map(b => b.user_id)
+  ).size;
+
+  return {
+    pendingBookings,
+    totalBookings,
+    monthlyRevenue,
+    totalGuests: uniqueGuests,
+  };
+};
+
 const HostDashboard = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -99,6 +167,13 @@ const HostDashboard = () => {
   const { data: listings = [], isLoading: isLoadingListings } = useQuery({
     queryKey: ['host-listings', session?.user?.id],
     queryFn: () => fetchHostListings(session?.user?.id || ''),
+    enabled: !!session?.user?.id,
+  });
+
+  // Obtener estadísticas del host
+  const { data: stats } = useQuery({
+    queryKey: ['host-stats', session?.user?.id],
+    queryFn: () => fetchHostStats(session?.user?.id || ''),
     enabled: !!session?.user?.id,
   });
 
@@ -213,7 +288,7 @@ const HostDashboard = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{stats?.pendingBookings || 0}</div>
               <p className="text-xs text-muted-foreground">
                 esperando confirmación
               </p>
@@ -228,9 +303,9 @@ const HostDashboard = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€0</div>
+              <div className="text-2xl font-bold">€{stats?.monthlyRevenue?.toFixed(2) || '0.00'}</div>
               <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
+                ingresos este mes
               </p>
             </CardContent>
           </Card>
@@ -243,7 +318,7 @@ const HostDashboard = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{stats?.totalGuests || 0}</div>
               <p className="text-xs text-muted-foreground">
                 huéspedes únicos
               </p>

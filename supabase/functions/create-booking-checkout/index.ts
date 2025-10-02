@@ -35,9 +35,21 @@ Deno.serve(async (req) => {
     if (!user) throw new Error('User not found.');
 
     const { listing, range, totalPrice, deposit } = await req.json();
+    console.log('Checkout request data:', { listing: listing?.id, range, totalPrice, deposit, userId: user.id });
+    
     if (!listing || !range || !totalPrice || !deposit) {
       throw new Error('Missing required booking information.');
     }
+
+    const metadata = {
+      user_id: user.id,
+      listing_id: listing.id.toString(),
+      start_date: range.from,
+      end_date: range.to,
+      total_price: totalPrice.toString(),
+    };
+    
+    console.log('Creating Stripe session with metadata:', metadata);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -57,14 +69,10 @@ Deno.serve(async (req) => {
       ],
       success_url: `${Deno.env.get('SITE_URL')}/payment/success?type=booking`,
       cancel_url: `${Deno.env.get('SITE_URL')}/listing/${listing.id}`,
-      metadata: {
-        user_id: user.id,
-        listing_id: listing.id,
-        start_date: range.from,
-        end_date: range.to,
-        total_price: totalPrice,
-      }
+      metadata
     });
+    
+    console.log('Stripe session created:', session.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

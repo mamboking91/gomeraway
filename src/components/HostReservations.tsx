@@ -17,7 +17,7 @@ interface Booking {
   end_date: string;
   total_price: number;
   deposit_paid: boolean;
-  status: 'confirmed' | 'pending' | 'cancelled' | 'rejected';
+  status: 'confirmed' | 'pending_confirmation' | 'cancelled';
   created_at: string;
   listings: {
     id: number;
@@ -118,6 +118,16 @@ const HostReservations: React.FC = () => {
     enabled: !!session?.user?.id,
   });
 
+  // Debug: Log bookings to console
+  React.useEffect(() => {
+    if (bookings) {
+      console.log('HostReservations Debug:', bookings);
+      bookings.forEach(booking => {
+        console.log(`Host Booking ${booking.id}: status=${booking.status}, created_at=${booking.created_at}`);
+      });
+    }
+  }, [bookings]);
+
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
       const { error } = await supabase
@@ -129,6 +139,7 @@ const HostReservations: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hostBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['host-stats'] });
       toast.success(t('host.bookingStatusUpdated'));
     },
     onError: (error) => {
@@ -142,18 +153,18 @@ const HostReservations: React.FC = () => {
   };
 
   const handleRejectBooking = (bookingId: number) => {
-    updateBookingStatusMutation.mutate({ bookingId, status: 'rejected' });
+    updateBookingStatusMutation.mutate({ bookingId, status: 'cancelled' });
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       confirmed: { label: t('booking.statusConfirmed'), variant: 'default' as const },
-      pending: { label: t('booking.statusPending'), variant: 'secondary' as const },
+      pending_confirmation: { label: t('booking.statusPending'), variant: 'secondary' as const },
       cancelled: { label: t('booking.statusCancelled'), variant: 'destructive' as const },
-      rejected: { label: t('booking.statusRejected'), variant: 'destructive' as const },
+      cancelled: { label: t('booking.statusRejected'), variant: 'destructive' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending_confirmation;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -278,7 +289,7 @@ const HostReservations: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              {booking.status === 'confirmed' && (
+              {booking.status === 'pending_confirmation' && (
                 <div className="flex space-x-2 pt-2">
                   <Button
                     variant="outline"

@@ -16,7 +16,7 @@ interface UserBooking {
   end_date: string;
   total_price: number;
   deposit_paid: boolean;
-  status: 'confirmed' | 'pending' | 'cancelled' | 'rejected';
+  status: 'confirmed' | 'pending_confirmation' | 'cancelled';
   created_at: string;
   listings: {
     id: number;
@@ -102,15 +102,25 @@ const UserReservations: React.FC = () => {
     enabled: !!session?.user?.id,
   });
 
+  // Debug: Log bookings to console
+  React.useEffect(() => {
+    if (bookings) {
+      console.log('UserReservations Debug:', bookings);
+      bookings.forEach(booking => {
+        console.log(`Booking ${booking.id}: status=${booking.status}, created_at=${booking.created_at}`);
+      });
+    }
+  }, [bookings]);
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       confirmed: { label: t('booking.statusConfirmed'), variant: 'default' as const },
-      pending: { label: t('booking.statusPending'), variant: 'secondary' as const },
+      pending_confirmation: { label: t('booking.statusPending'), variant: 'secondary' as const },
       cancelled: { label: t('booking.statusCancelled'), variant: 'destructive' as const },
-      rejected: { label: t('booking.statusRejected'), variant: 'destructive' as const },
+      cancelled: { label: t('booking.statusRejected'), variant: 'destructive' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending_confirmation;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -239,7 +249,7 @@ const UserReservations: React.FC = () => {
               </div>
 
               {/* Status Messages */}
-              {booking.status === 'pending' && (
+              {booking.status === 'pending_confirmation' && (
                 <div className="flex items-center space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <Clock className="h-4 w-4 text-yellow-600" />
                   <p className="text-sm text-yellow-800">
@@ -248,7 +258,7 @@ const UserReservations: React.FC = () => {
                 </div>
               )}
 
-              {booking.status === 'rejected' && (
+              {booking.status === 'cancelled' && (
                 <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-800">
                     {t('user.bookingRejected')}
