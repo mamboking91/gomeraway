@@ -161,7 +161,7 @@ const HostReservations: React.FC = () => {
       confirmed: { label: t('booking.statusConfirmed'), variant: 'default' as const },
       pending_confirmation: { label: t('booking.statusPending'), variant: 'secondary' as const },
       cancelled: { label: t('booking.statusCancelled'), variant: 'destructive' as const },
-      cancelled: { label: t('booking.statusRejected'), variant: 'destructive' as const },
+      rejected: { label: t('booking.statusRejected'), variant: 'destructive' as const },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending_confirmation;

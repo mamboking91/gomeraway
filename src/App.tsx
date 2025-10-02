@@ -17,6 +17,10 @@ import HostDashboard from "./pages/HostDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import CreateListing from "./pages/CreateListing";
 import EditListing from "./pages/EditListing";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import SubscriptionsManager from "./pages/admin/SubscriptionsManager";
+import ListingsManager from "./pages/admin/ListingsManager";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
 
 const queryClient = new QueryClient();
 
@@ -38,8 +42,13 @@ const App = () => (
             <Route path="/about" element={<AboutPage />} />
             <Route path="/dashboard/host" element={<HostDashboard />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
+            <Route path="/subscription" element={<SubscriptionManagement />} />
             <Route path="/listings/create" element={<CreateListing />} />
             <Route path="/listings/edit/:id" element={<EditListing />} />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/subscriptions" element={<SubscriptionsManager />} />
+            <Route path="/admin/listings" element={<ListingsManager />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

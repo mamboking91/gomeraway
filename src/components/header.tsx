@@ -1,38 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Globe, User, LogOut, Calendar, Home } from 'lucide-react';
+import { Menu, Globe, User, LogOut, Calendar, Home, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/lib/supabaseClient';
-import type { Session } from '@supabase/supabase-js';
-import AuthModal from './AuthModal'; // Importamos el nuevo modal
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from './AuthModal';
+import ProfileCompletionModal from './ProfileCompletionModal'; // Importamos el nuevo modal
 
 const Header = () => {
   const { language, setLanguage, t } = useLanguage();
-  const [session, setSession] = useState<Session | null>(null);
+  const { user, profile, logout, loading } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Obtenemos la sesión actual al cargar el componente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    // Escuchamos los cambios en el estado de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/'); // Redirigir a la página de inicio después de cerrar sesión
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
+  const handleProfileComplete = () => {
+    // Refresh para actualizar el estado del perfil
+    window.location.reload();
   };
 
   const navigation = [
@@ -99,14 +95,31 @@ const Header = () => {
               </Link>
 
               {/* User Menu */}
-              {session ? (
+              {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="rounded-full px-3 py-2 border border-border hover:bg-muted/50 transition-colors">
                       <User className="h-4 w-4" />
+                      {profile?.full_name && (
+                        <span className="ml-2 hidden sm:inline-block">
+                          {profile.full_name.split(' ')[0]}
+                        </span>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-56">
+                    {profile && (
+                      <div className="px-3 py-2 text-sm">
+                        <p className="font-medium">{profile.full_name || 'Usuario'}</p>
+                        <p className="text-muted-foreground text-xs">{profile.email}</p>
+                        {!profile.profile_completed && (
+                          <p className="text-amber-600 text-xs mt-1">
+                            ⚠️ Perfil incompleto
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate('/dashboard/user')}>
                       <Calendar className="mr-2 h-4 w-4" />
                       <span>{t('user.myReservations')}</span>
@@ -115,6 +128,22 @@ const Header = () => {
                       <Home className="mr-2 h-4 w-4" />
                       <span>{t('nav.becomeHost')}</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/subscription')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Mi Suscripción</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Mi Perfil</span>
+                    </DropdownMenuItem>
+                    {profile?.role === 'admin' && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Panel Admin</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>{t('header.logout')}</span>
@@ -137,6 +166,11 @@ const Header = () => {
         </div>
       </header>
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <ProfileCompletionModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)}
+        onComplete={handleProfileComplete}
+      />
     </>
   );
 };

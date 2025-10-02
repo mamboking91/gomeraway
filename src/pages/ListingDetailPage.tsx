@@ -4,11 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { MapPin, Users, Settings, Fuel } from 'lucide-react';
+import ProfileCompletionModal from '@/components/ProfileCompletionModal';
+import { MapPin, Users, Settings, Fuel, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, differenceInCalendarDays, eachDayOfInterval } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 // Query para los detalles del anuncio
 const fetchListingDetails = async (id: string) => {
@@ -36,7 +39,9 @@ const fetchBookings = async (listingId: string) => {
 
 const ListingDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const { user, profile, isProfileComplete } = useAuth();
   const [loadingBooking, setLoadingBooking] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   const today = new Date();
   const [range, setRange] = useState<DateRange | undefined>(undefined);
@@ -90,15 +95,24 @@ const ListingDetailPage = () => {
 
   const handleBooking = async () => {
     setLoadingBooking(true);
-    const { data: { user } } = await supabase.auth.getUser();
+
+    // Verificar autenticación
     if (!user) {
-      alert("Por favor, inicia sesión para hacer una reserva.");
+      toast.error("Por favor, inicia sesión para hacer una reserva.");
       setLoadingBooking(false);
       return;
     }
 
+    // Verificar perfil completo
+    if (!isProfileComplete) {
+      setShowProfileModal(true);
+      setLoadingBooking(false);
+      return;
+    }
+
+    // Verificar fechas
     if (!range?.from || !range?.to || !listing || totalPrice === null) {
-      alert("Por favor, selecciona un rango de fechas válido.");
+      toast.error("Por favor, selecciona un rango de fechas válido.");
       setLoadingBooking(false);
       return;
     }
@@ -118,12 +132,18 @@ const ListingDetailPage = () => {
     });
 
     if (error) {
-      alert(`Error al crear la reserva: ${error.message}`);
+      toast.error(`Error al crear la reserva: ${error.message}`);
       setLoadingBooking(false);
       return;
     }
 
     window.location.href = data.url;
+  };
+
+  const handleProfileComplete = () => {
+    setShowProfileModal(false);
+    // Después de completar el perfil, el usuario puede intentar la reserva de nuevo
+    toast.success('¡Perfil completado! Ahora puedes continuar con la reserva.');
   };
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -197,6 +217,13 @@ const ListingDetailPage = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onComplete={handleProfileComplete}
+      />
     </div>
   );
 };

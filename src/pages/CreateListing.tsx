@@ -15,8 +15,10 @@ import Footer from '@/components/footer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
-import { ArrowLeft, Upload, MapPin, Home, Car } from 'lucide-react';
+import { ArrowLeft, Upload, MapPin, Home, Car, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useListingLimits, useCanCreateListing } from '@/hooks/useListingLimits';
+import LimitIndicator from '@/components/LimitIndicator';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
@@ -42,6 +44,10 @@ const CreateListing = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Hooks para verificar límites
+  const limits = useListingLimits();
+  const { checkCanCreate } = useCanCreateListing();
 
   const form = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
@@ -81,6 +87,13 @@ const CreateListing = () => {
 
     setSubmitting(true);
     try {
+      // 🔒 Verificar límites de anuncios antes de crear
+      const limitsCheck = await checkCanCreate();
+      if (!limitsCheck.canCreate) {
+        toast.error(limitsCheck.message || 'No puedes crear más anuncios con tu plan actual');
+        setSubmitting(false);
+        return;
+      }
       // 1. Crear el listing principal
       const listingData = {
         title: data.title,
@@ -180,6 +193,39 @@ const CreateListing = () => {
             Comparte tu espacio o vehículo con viajeros en La Gomera
           </p>
         </div>
+
+        {/* Indicador de límites */}
+        <div className="mb-6">
+          <LimitIndicator
+            currentCount={limits.currentCount}
+            maxAllowed={limits.maxAllowed}
+            planName={limits.planName}
+            isUnlimited={limits.isUnlimited}
+            loading={limits.loading}
+          />
+        </div>
+
+        {/* Mensaje de bloqueo si excede límites */}
+        {!limits.loading && !limits.canCreate && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                <div>
+                  <h3 className="font-medium text-red-800 mb-1">
+                    No puedes crear más anuncios
+                  </h3>
+                  <p className="text-sm text-red-700 mb-3">
+                    {limits.message || 'Has alcanzado el límite de tu plan actual.'}
+                  </p>
+                  <Button asChild size="sm" className="bg-red-600 hover:bg-red-700">
+                    <a href="/membership">Mejorar Plan</a>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

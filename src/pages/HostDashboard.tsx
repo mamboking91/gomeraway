@@ -13,6 +13,8 @@ import HostReservations from '@/components/HostReservations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
+import { useListingLimits } from '@/hooks/useListingLimits';
+import LimitIndicator from '@/components/LimitIndicator';
 import { 
   Plus, 
   Home, 
@@ -142,6 +144,9 @@ const HostDashboard = () => {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Hook para límites de anuncios
+  const limits = useListingLimits();
 
   useEffect(() => {
     // Verificar autenticación
@@ -261,6 +266,17 @@ const HostDashboard = () => {
           <p className="text-muted-foreground">
             Gestiona tus anuncios y reservas en La Gomera
           </p>
+        </div>
+
+        {/* Límites de Anuncios */}
+        <div className="mb-6">
+          <LimitIndicator
+            currentCount={limits.currentCount}
+            maxAllowed={limits.maxAllowed}
+            planName={limits.planName}
+            isUnlimited={limits.isUnlimited}
+            loading={limits.loading}
+          />
         </div>
 
         {/* Dashboard Stats */}
