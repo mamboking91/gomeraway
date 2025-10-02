@@ -36,10 +36,10 @@ const Header = () => {
   };
 
   const navigation = [
-    { name: t('nav.accommodation'), href: '#accommodation' },
-    { name: t('nav.vehicles'), href: '#vehicles' },
+    { name: t('nav.accommodation'), href: '/accommodation' },
+    { name: t('nav.vehicles'), href: '/vehicles' },
     { name: t('nav.experiences'), href: '#experiences' },
-    { name: t('nav.about'), href: '#about' },
+    { name: t('nav.about'), href: '/about' },
   ];
 
   return (
@@ -60,10 +60,17 @@ const Header = () => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               {navigation.map((item) => (
-                <a key={item.name} href={item.href} className="text-foreground hover:text-primary font-medium transition-colors relative group py-2">
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
-                </a>
+                item.href.startsWith('#') ? (
+                  <a key={item.name} href={item.href} className="text-foreground hover:text-primary font-medium transition-colors relative group py-2">
+                    {item.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  </a>
+                ) : (
+                  <Link key={item.name} to={item.href} className="text-foreground hover:text-primary font-medium transition-colors relative group py-2">
+                    {item.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  </Link>
+                )
               ))}
             </nav>
 
@@ -100,6 +107,10 @@ const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate('/dashboard/host')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Mi Dashboard</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Cerrar sesión</span>

@@ -10,22 +10,63 @@ import Footer from '@/components/footer';
 import heroImage from '@/assets/hero-lagomera.jpg';
 import { supabase } from '../lib/supabaseClient'; // Importamos nuestro cliente de Supabase
 
-// Función para obtener los anuncios de Supabase
+// Función para obtener los anuncios de Supabase con información del host
 const fetchListings = async () => {
-  const { data, error } = await supabase
+  // Primero obtenemos los listings
+  const { data: listings, error: listingsError } = await supabase
     .from('listings')
     .select('*')
-    .eq('is_active', true); // Solo traemos los anuncios activos
+    .eq('is_active', true);
 
-  if (error) {
-    throw new Error(error.message);
+  if (listingsError) {
+    console.error('Error fetching listings:', listingsError);
+    throw new Error(listingsError.message);
   }
-  return data;
+
+  if (!listings || listings.length === 0) {
+    return [];
+  }
+
+  // Luego obtenemos los profiles
+  const hostIds = [...new Set(listings.map(listing => listing.host_id))];
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', hostIds);
+
+  if (profilesError) {
+    console.error('Error fetching profiles:', profilesError);
+    // Si no podemos obtener profiles, devolvemos listings sin profile info
+    return listings.map(listing => ({
+      ...listing,
+      profiles: null
+    }));
+  }
+
+  // Combinamos los datos
+  const listingsWithProfiles = listings.map(listing => {
+    const profile = profiles?.find(p => p.id === listing.host_id);
+    return {
+      ...listing,
+      profiles: profile || null
+    };
+  });
+
+  return listingsWithProfiles;
 };
+
+interface SearchFilters {
+  checkIn: Date | undefined;
+  checkOut: Date | undefined;
+  guests: string;
+  searchType: string;
+  vehicleType?: string;
+}
 
 const Index = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('all');
+  const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
 
   // Usamos useQuery para obtener los datos
   const { data: listings, isLoading, isError } = useQuery({
@@ -33,13 +74,41 @@ const Index = () => {
     queryFn: fetchListings,
   });
 
-  // Filtrado de anuncios (ahora dinámico)
-  const filteredListings =
-    !isLoading && listings
-      ? activeTab === 'all'
-        ? listings
-        : listings.filter((listing) => listing.type === activeTab)
-      : [];
+  // Función para manejar la búsqueda
+  const handleSearch = (filters: SearchFilters) => {
+    setSearchFilters(filters);
+    setActiveTab(filters.searchType === 'accommodation' ? 'accommodation' : 'vehicle');
+  };
+
+  // Filtrado de anuncios (ahora dinámico con búsqueda)
+  const filteredListings = React.useMemo(() => {
+    if (!listings || isLoading) return [];
+    
+    let filtered = listings;
+    
+    // Filtrar por tab activo
+    if (activeTab !== 'all') {
+      filtered = filtered.filter((listing) => listing.type === activeTab);
+    }
+    
+    // Aplicar filtros de búsqueda si existen
+    if (searchFilters) {
+      if (searchFilters.guests && searchFilters.searchType === 'accommodation') {
+        const guestCount = parseInt(searchFilters.guests);
+        filtered = filtered.filter((listing) => 
+          (listing.max_guests || 2) >= guestCount
+        );
+      }
+      
+      if (searchFilters.vehicleType && searchFilters.searchType === 'vehicles') {
+        filtered = filtered.filter((listing) => 
+          listing.vehicle_type?.toLowerCase() === searchFilters.vehicleType?.toLowerCase()
+        );
+      }
+    }
+    
+    return filtered;
+  }, [listings, activeTab, searchFilters, isLoading]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,7 +128,7 @@ const Index = () => {
             {t('hero.subtitle')}
           </p>
           <div className="animate-scale-in">
-            <HeroSearch />
+            <HeroSearch onSearch={handleSearch} />
           </div>
         </div>
       </section>
@@ -106,8 +175,10 @@ const Index = () => {
                     reviewCount={0} // Dato de ejemplo
                     images={listing.images_urls || []}
                     type={listing.type}
-                    // Los detalles y el host los conectaremos en los siguientes pasos
-                    host={{ name: 'Anfitrión', verified: true }} 
+                    host={{ 
+                      name: listing.profiles?.full_name || listing.profiles?.email?.split('@')[0] || 'Anfitrión', 
+                      verified: true 
+                    }} 
                   />
                 </div>
               ))}
