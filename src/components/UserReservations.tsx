@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, MapPin, User, Euro, Check, X } from 'lucide-react';
+import { CalendarDays, MapPin, Home, Car, Euro, Clock, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from 'sonner';
 
-interface Booking {
+interface UserBooking {
   id: number;
   listing_id: number;
   user_id: string;
@@ -25,35 +24,20 @@ interface Booking {
     location: string;
     type: string;
     images_urls: string[];
+    host_id: string;
   };
-  profiles: {
+  host_profile: {
     full_name: string;
     email: string;
-  };
+  } | null;
 }
 
-const fetchHostBookings = async (hostId: string) => {
-  // First get all listings for this host
-  const { data: hostListings, error: listingsError } = await supabase
-    .from('listings')
-    .select('id')
-    .eq('host_id', hostId);
-
-  if (listingsError) {
-    throw new Error(listingsError.message);
-  }
-
-  if (!hostListings || hostListings.length === 0) {
-    return [];
-  }
-
-  const listingIds = hostListings.map(listing => listing.id);
-
-  // Then get bookings for those listings
+const fetchUserBookings = async (userId: string) => {
+  // Primero obtenemos las reservas del usuario
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select('*')
-    .in('listing_id', listingIds)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (bookingsError) {
@@ -64,36 +48,36 @@ const fetchHostBookings = async (hostId: string) => {
     return [];
   }
 
-  // Get listings info
+  // Obtener información de los listings
+  const listingIds = [...new Set(bookings.map(booking => booking.listing_id))];
   const { data: listings } = await supabase
     .from('listings')
-    .select('id, title, location, type, images_urls')
+    .select('id, title, location, type, images_urls, host_id')
     .in('id', listingIds);
 
-  // Get guest profiles
-  const guestIds = [...new Set(bookings.map(booking => booking.user_id))];
-  const { data: profiles } = await supabase
+  // Obtener perfiles de los hosts
+  const hostIds = [...new Set(listings?.map(listing => listing.host_id).filter(Boolean) || [])];
+  const { data: hostProfiles } = await supabase
     .from('profiles')
     .select('id, full_name, email')
-    .in('id', guestIds);
+    .in('id', hostIds);
 
-  // Combine data
-  const data = bookings.map(booking => {
+  // Combinar datos
+  const bookingsWithHosts = bookings.map(booking => {
     const listing = listings?.find(l => l.id === booking.listing_id);
-    const profile = profiles?.find(p => p.id === booking.user_id);
+    const hostProfile = hostProfiles?.find(profile => profile.id === listing?.host_id);
     return {
       ...booking,
       listings: listing || null,
-      profiles: profile || null
+      host_profile: hostProfile || null
     };
   });
 
-  return data as Booking[];
+  return bookingsWithHosts as UserBooking[];
 };
 
-const HostReservations: React.FC = () => {
+const UserReservations: React.FC = () => {
   const { t } = useLanguage();
-  const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -113,37 +97,10 @@ const HostReservations: React.FC = () => {
   }, []);
 
   const { data: bookings, isLoading, isError } = useQuery({
-    queryKey: ['hostBookings', session?.user?.id],
-    queryFn: () => fetchHostBookings(session?.user?.id || ''),
+    queryKey: ['userBookings', session?.user?.id],
+    queryFn: () => fetchUserBookings(session?.user?.id || ''),
     enabled: !!session?.user?.id,
   });
-
-  const updateBookingStatusMutation = useMutation({
-    mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status })
-        .eq('id', bookingId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['hostBookings'] });
-      toast.success(t('host.bookingStatusUpdated'));
-    },
-    onError: (error) => {
-      console.error('Error updating booking status:', error);
-      toast.error(t('host.bookingStatusError'));
-    },
-  });
-
-  const handleAcceptBooking = (bookingId: number) => {
-    updateBookingStatusMutation.mutate({ bookingId, status: 'confirmed' });
-  };
-
-  const handleRejectBooking = (bookingId: number) => {
-    updateBookingStatusMutation.mutate({ bookingId, status: 'rejected' });
-  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -190,10 +147,10 @@ const HostReservations: React.FC = () => {
       <div className="text-center py-12">
         <CalendarDays className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">
-          {t('host.noBookingsTitle')}
+          {t('user.noBookingsTitle')}
         </h3>
         <p className="text-muted-foreground">
-          {t('host.noBookingsDescription')}
+          {t('user.noBookingsDescription')}
         </p>
       </div>
     );
@@ -203,10 +160,10 @@ const HostReservations: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">
-          {t('host.reservationsTitle')}
+          {t('user.myReservationsTitle')}
         </h2>
         <Badge variant="outline" className="px-3 py-1">
-          {bookings.length} {t('host.totalBookings')}
+          {bookings.length} {t('user.totalBookings')}
         </Badge>
       </div>
 
@@ -216,12 +173,17 @@ const HostReservations: React.FC = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">
-                    {booking.listings?.title || 'Anuncio'}
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {booking.listings?.type === 'accommodation' ? (
+                      <Home className="h-4 w-4" />
+                    ) : (
+                      <Car className="h-4 w-4" />
+                    )}
+                    {booking.listings?.title}
                   </CardTitle>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="h-3 w-3 mr-1" />
-                    {booking.listings?.location || 'Ubicación no disponible'}
+                    {booking.listings?.location}
                   </div>
                 </div>
                 {getStatusBadge(booking.status)}
@@ -229,19 +191,16 @@ const HostReservations: React.FC = () => {
             </CardHeader>
             
             <CardContent className="space-y-4">
-              {/* Guest Information */}
+              {/* Host Information */}
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                  {booking.profiles?.full_name || 
-                   booking.profiles?.email?.split('@')[0] || 
-                   'Huésped'}
-                </span>
-                {booking.profiles?.email && (
-                  <span className="text-sm text-muted-foreground">
-                    ({booking.profiles.email})
+                <span className="text-sm">
+                  {t('listing.hostedBy')} <span className="font-medium">
+                    {booking.host_profile?.full_name || 
+                     booking.host_profile?.email?.split('@')[0] || 
+                     'Anfitrión'}
                   </span>
-                )}
+                </span>
               </div>
 
               {/* Booking Details */}
@@ -254,7 +213,9 @@ const HostReservations: React.FC = () => {
                       {formatDate(booking.start_date)} - {formatDate(booking.end_date)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {calculateNights(booking.start_date, booking.end_date)} {t('booking.nights')}
+                      {calculateNights(booking.start_date, booking.end_date)} {
+                        booking.listings?.type === 'accommodation' ? t('booking.nights') : t('booking.days')
+                      }
                     </div>
                   </div>
                 </div>
@@ -277,29 +238,21 @@ const HostReservations: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              {booking.status === 'confirmed' && (
-                <div className="flex space-x-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAcceptBooking(booking.id)}
-                    disabled={updateBookingStatusMutation.isPending}
-                    className="text-green-600 border-green-600 hover:bg-green-50"
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    {t('booking.accept')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRejectBooking(booking.id)}
-                    disabled={updateBookingStatusMutation.isPending}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    {t('booking.reject')}
-                  </Button>
+              {/* Status Messages */}
+              {booking.status === 'pending' && (
+                <div className="flex items-center space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <p className="text-sm text-yellow-800">
+                    {t('user.pendingApproval')}
+                  </p>
+                </div>
+              )}
+
+              {booking.status === 'rejected' && (
+                <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    {t('user.bookingRejected')}
+                  </p>
                 </div>
               )}
 
@@ -314,4 +267,4 @@ const HostReservations: React.FC = () => {
   );
 };
 
-export default HostReservations;
+export default UserReservations;

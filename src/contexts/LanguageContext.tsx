@@ -14,8 +14,9 @@ const translations: Translations = {
   'nav.vehicles': { en: 'Vehicles', es: 'Vehículos', de: 'Fahrzeuge' },
   'nav.experiences': { en: 'Experiences', es: 'Experiencias', de: 'Erlebnisse' },
   'nav.about': { en: 'About La Gomera', es: 'Sobre La Gomera', de: 'Über La Gomera' },
-  'nav.becomeHost': { en: 'Become a Host', es: 'Ser Anfitrión', de: 'Gastgeber werden' },
+  'nav.becomeHost': { en: 'Host Dashboard', es: 'Panel de Anfitrión', de: 'Gastgeber-Dashboard' },
   'nav.discover': { en: 'Discover La Gomera', es: 'Descubre La Gomera', de: 'Entdecke La Gomera' },
+  'header.logout': { en: 'Sign Out', es: 'Cerrar Sesión', de: 'Abmelden' },
 
   // Hero Section
   'hero.title': { en: 'Discover La Gomera', es: 'Descubre La Gomera', de: 'Entdecke La Gomera' },
@@ -129,6 +130,24 @@ const translations: Translations = {
   'booking.accept': { en: 'Accept', es: 'Aceptar', de: 'Akzeptieren' },
   'booking.reject': { en: 'Reject', es: 'Rechazar', de: 'Ablehnen' },
   'booking.createdAt': { en: 'Booking created', es: 'Reserva creada', de: 'Buchung erstellt' },
+  'booking.days': { en: 'days', es: 'días', de: 'Tage' },
+
+  // User Dashboard
+  'user.dashboardTitle': { en: 'My Dashboard', es: 'Mi Panel', de: 'Mein Dashboard' },
+  'user.dashboardSubtitle': { en: 'Manage your bookings and travel history', es: 'Gestiona tus reservas e historial de viajes', de: 'Verwalten Sie Ihre Buchungen und Reisegeschichte' },
+  'user.myReservations': { en: 'My Reservations', es: 'Mis Reservas', de: 'Meine Reservierungen' },
+  'user.myReservationsTitle': { en: 'My Reservations', es: 'Mis Reservas', de: 'Meine Reservierungen' },
+  'user.totalBookings': { en: 'Total Bookings', es: 'Reservas Totales', de: 'Gesamtbuchungen' },
+  'user.confirmedBookings': { en: 'Confirmed', es: 'Confirmadas', de: 'Bestätigt' },
+  'user.pendingBookings': { en: 'Pending', es: 'Pendientes', de: 'Ausstehend' },
+  'user.totalSpent': { en: 'Total Spent', es: 'Total Gastado', de: 'Gesamtausgaben' },
+  'user.reservationsTotal': { en: 'total reservations', es: 'reservas totales', de: 'Gesamtreservierungen' },
+  'user.awaitingConfirmation': { en: 'awaiting confirmation', es: 'esperando confirmación', de: 'warten auf Bestätigung' },
+  'user.totalAmount': { en: 'total amount spent', es: 'cantidad total gastada', de: 'Gesamtbetrag ausgegeben' },
+  'user.noBookingsTitle': { en: 'No bookings yet', es: 'Sin reservas aún', de: 'Noch keine Buchungen' },
+  'user.noBookingsDescription': { en: 'Start exploring accommodations and vehicles to create your first booking.', es: 'Comienza a explorar alojamientos y vehículos para crear tu primera reserva.', de: 'Beginnen Sie mit der Erkundung von Unterkünften und Fahrzeugen, um Ihre erste Buchung zu erstellen.' },
+  'user.pendingApproval': { en: 'Your booking is pending host approval.', es: 'Tu reserva está pendiente de aprobación del anfitrión.', de: 'Ihre Buchung wartet auf die Genehmigung des Gastgebers.' },
+  'user.bookingRejected': { en: 'This booking was rejected by the host.', es: 'Esta reserva fue rechazada por el anfitrión.', de: 'Diese Buchung wurde vom Gastgeber abgelehnt.' },
 
   // Footer
   'footer.tagline': { en: 'Your gateway to La Gomera. Discover authentic accommodations and reliable vehicle rentals on this pristine Canary Island paradise.', es: 'Tu puerta de entrada a La Gomera. Descubre alojamientos auténticos y alquileres de vehículos confiables en este paraíso prístino de las Islas Canarias.', de: 'Ihr Tor zu La Gomera. Entdecken Sie authentische Unterkünfte und zuverlässige Fahrzeugvermietungen auf diesem unberührten Kanarischen Inselparadies.' },

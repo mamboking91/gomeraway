@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Globe, User, LogOut } from 'lucide-react';
+import { Menu, Globe, User, LogOut, Calendar, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -107,13 +107,17 @@ const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate('/dashboard/user')}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      <span>{t('user.myReservations')}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/dashboard/host')}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Mi Dashboard</span>
+                      <Home className="mr-2 h-4 w-4" />
+                      <span>{t('nav.becomeHost')}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Cerrar sesión</span>
+                      <span>{t('header.logout')}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

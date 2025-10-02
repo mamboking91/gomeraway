@@ -14,6 +14,7 @@ import AccommodationPage from "./pages/AccommodationPage";
 import VehiclesPage from "./pages/VehiclesPage";
 import AboutPage from "./pages/AboutPage";
 import HostDashboard from "./pages/HostDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import CreateListing from "./pages/CreateListing";
 import EditListing from "./pages/EditListing";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/vehicles" element={<VehiclesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/dashboard/host" element={<HostDashboard />} />
+            <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/listings/create" element={<CreateListing />} />
             <Route path="/listings/edit/:id" element={<EditListing />} />
 
