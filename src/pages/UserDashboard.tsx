@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,8 +39,12 @@ const fetchUserStats = async (userId: string) => {
 const UserDashboard = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Obtener tab de la URL, por defecto 'reservations'
+  const activeTab = searchParams.get('tab') || 'reservations';
 
   useEffect(() => {
     // Verificar autenticación
@@ -155,7 +159,7 @@ const UserDashboard = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="reservations" className="space-y-4">
+        <Tabs value={activeTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="reservations">{t('user.myReservations')}</TabsTrigger>
           </TabsList>
