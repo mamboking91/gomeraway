@@ -5,6 +5,7 @@ import { Star, Heart, MapPin, Users, Car, Fuel, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 // URL de tu bucket de Supabase Storage
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -64,10 +65,12 @@ const ListingCard: React.FC<ListingCardProps> = ({
       <div className="group bg-gradient-card rounded-2xl shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 overflow-hidden">
         {/* Image Gallery */}
         <div className="relative aspect-square overflow-hidden">
-          <img
+          <OptimizedImage
             src={imageUrl}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+            aspectRatio="square"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           <Button
             variant="ghost"

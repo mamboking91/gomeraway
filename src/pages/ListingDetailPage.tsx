@@ -6,6 +6,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal';
 import { MapPin, Users, Settings, Fuel, AlertTriangle } from 'lucide-react';
+import { ImageGallery } from '@/components/OptimizedImage';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, differenceInCalendarDays, eachDayOfInterval } from 'date-fns';
@@ -163,7 +164,13 @@ const ListingDetailPage = () => {
             <MapPin className="h-4 w-4 mr-2" />
             <span>{listing.location}</span>
           </div>
-          <img src={imageUrl} alt={listing.title} className="w-full rounded-lg mb-6 max-h-[500px] object-cover" />
+          <ImageGallery
+            images={listing.images_urls && listing.images_urls.length > 0 ? listing.images_urls : [imageUrl]}
+            title={listing.title}
+            className="mb-6"
+            maxHeight="500px"
+            showThumbnails={listing.images_urls && listing.images_urls.length > 1}
+          />
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-3">
               {/* 👇 CÓDIGO RESTAURADO AQUÍ 👇 */}

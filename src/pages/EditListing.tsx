@@ -16,8 +16,9 @@ import Footer from '@/components/footer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
-import { ArrowLeft, MapPin, Home, Car } from 'lucide-react';
+import { ArrowLeft, MapPin, Home, Car, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import ImageUpload from '@/components/ImageUpload';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
@@ -81,6 +82,7 @@ const EditListing = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const form = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
@@ -131,6 +133,11 @@ const EditListing = () => {
         seats: listingData.seats || undefined,
         amenities: listingData.amenities || listingData.features || '',
       });
+      
+      // Inicializar imágenes
+      if (listingData.images_urls && Array.isArray(listingData.images_urls)) {
+        setImageUrls(listingData.images_urls);
+      }
     }
   }, [listingData, form]);
 
@@ -147,6 +154,7 @@ const EditListing = () => {
         location: data.location,
         price_per_night_or_day: data.price_per_night_or_day,
         is_active: data.is_active,
+        images_urls: imageUrls, // Actualizar las URLs de imágenes
       };
 
       const { error: listingError } = await supabase
@@ -521,6 +529,28 @@ const EditListing = () => {
                       </FormControl>
                     </FormItem>
                   )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Imágenes del Anuncio */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Imágenes del Anuncio
+                </CardTitle>
+                <CardDescription>
+                  Sube hasta 10 imágenes de alta calidad. La primera imagen será la principal.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  onImagesChange={setImageUrls}
+                  initialImages={imageUrls}
+                  maxImages={10}
+                  maxSizeMB={5}
+                  disabled={submitting}
                 />
               </CardContent>
             </Card>

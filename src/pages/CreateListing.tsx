@@ -19,6 +19,7 @@ import { ArrowLeft, Upload, MapPin, Home, Car, AlertTriangle } from 'lucide-reac
 import { toast } from 'sonner';
 import { useListingLimits, useCanCreateListing } from '@/hooks/useListingLimits';
 import LimitIndicator from '@/components/LimitIndicator';
+import ImageUpload from '@/components/ImageUpload';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
@@ -44,6 +45,7 @@ const CreateListing = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   
   // Hooks para verificar límites
   const limits = useListingLimits();
@@ -103,7 +105,7 @@ const CreateListing = () => {
         price_per_night_or_day: data.price_per_night_or_day,
         host_id: session.user.id,
         is_active: data.is_active,
-        images_urls: [], // Array vacío como placeholder
+        images_urls: imageUrls, // URLs de las imágenes subidas
       };
 
       const { data: newListing, error: listingError } = await supabase
@@ -539,6 +541,28 @@ const CreateListing = () => {
                       </FormControl>
                     </FormItem>
                   )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Imágenes del Anuncio */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Imágenes del Anuncio
+                </CardTitle>
+                <CardDescription>
+                  Sube hasta 10 imágenes de alta calidad. La primera imagen será la principal.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  onImagesChange={setImageUrls}
+                  initialImages={imageUrls}
+                  maxImages={10}
+                  maxSizeMB={5}
+                  disabled={submitting}
                 />
               </CardContent>
             </Card>
