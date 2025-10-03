@@ -44,13 +44,12 @@ interface SubscriptionStats {
 
 const PLAN_LIMITS = {
   'básico': 1,
-  'basico': 1,
   'premium': 5,
   'diamante': -1, // unlimited
 } as const;
 
 const PLAN_FEATURES = {
-  basico: {
+  'básico': {
     name: 'Básico',
     price: '€9.99',
     period: '/mes',
@@ -58,6 +57,7 @@ const PLAN_FEATURES = {
     icon: Circle,
     features: [
       '1 anuncio activo',
+      'Hasta 10 fotos por anuncio',
       'Soporte por email',
       'Panel básico de gestión',
       'Estadísticas básicas'
@@ -71,6 +71,7 @@ const PLAN_FEATURES = {
     icon: Star,
     features: [
       '5 anuncios activos',
+      'Hasta 20 fotos por anuncio',
       'Soporte prioritario',
       'Panel avanzado',
       'Estadísticas detalladas',
@@ -85,6 +86,7 @@ const PLAN_FEATURES = {
     icon: Crown,
     features: [
       'Anuncios ilimitados',
+      'Hasta 50 fotos por anuncio',
       'Soporte VIP 24/7',
       'Panel premium',
       'Analytics avanzados',
@@ -133,9 +135,10 @@ const fetchSubscriptionStats = async (userId: string): Promise<SubscriptionStats
   const bookingsCount = bookings?.length || 0;
   const revenue = bookings?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
   
-  const planKey = subscription?.plan?.toLowerCase() || 'basico';
-  const listingsLimit = PLAN_LIMITS[planKey as keyof typeof PLAN_LIMITS] || 1;
-  const canCreateMore = listingsLimit === -1 || listingsCount < listingsLimit;
+  // If no subscription, user can't create any listings
+  const planKey = subscription?.plan?.toLowerCase();
+  const listingsLimit = planKey ? (PLAN_LIMITS[planKey as keyof typeof PLAN_LIMITS] || 0) : 0;
+  const canCreateMore = subscription ? (listingsLimit === -1 || listingsCount < listingsLimit) : false;
 
   return {
     listingsCount,
@@ -147,7 +150,7 @@ const fetchSubscriptionStats = async (userId: string): Promise<SubscriptionStats
 };
 
 const SubscriptionManagement: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
@@ -163,8 +166,23 @@ const SubscriptionManagement: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  const currentPlan = subscription?.plan?.toLowerCase() || 'basico';
-  const currentPlanInfo = PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.basico;
+  const currentPlan = subscription?.plan?.toLowerCase() || 'none';
+  
+  // If no subscription, show that they need to subscribe
+  const currentPlanInfo = subscription ? 
+    (PLAN_FEATURES[currentPlan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES['básico']) :
+    {
+      name: 'Sin Suscripción',
+      price: '€0',
+      period: '',
+      color: 'gray',
+      icon: Circle,
+      features: [
+        'No puedes crear anuncios',
+        'Solo puedes hacer reservas',
+        'Acceso básico a la plataforma'
+      ]
+    };
   const CurrentIcon = currentPlanInfo.icon;
 
   const getUsagePercentage = () => {

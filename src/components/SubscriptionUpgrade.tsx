@@ -15,38 +15,38 @@ interface SubscriptionUpgradeProps {
 
 const plans = [
   {
-    id: 'basic',
-    name: 'Basic',
+    id: 'básico',
+    name: 'Básico',
     icon: <Star className="h-5 w-5" />,
-    price: 'Gratis',
-    listings: 3,
-    photos: 5,
-    features: ['3 anuncios', '5 fotos por anuncio', 'Soporte básico'],
-    color: 'bg-gray-100',
-    buttonColor: 'bg-gray-600'
+    price: '€9.99/mes',
+    listings: 1,
+    photos: 10,
+    features: ['1 anuncio activo', 'Hasta 10 fotos por anuncio', 'Soporte por email', 'Panel básico de gestión', 'Estadísticas básicas'],
+    color: 'bg-blue-100',
+    buttonColor: 'bg-blue-600'
   },
   {
     id: 'premium',
     name: 'Premium',
     icon: <Crown className="h-5 w-5" />,
-    price: '9.99€/mes',
-    listings: 10,
-    photos: 15,
-    features: ['10 anuncios', '15 fotos por anuncio', 'Destacado en búsquedas', 'Analytics básicos', 'Soporte prioritario'],
-    color: 'bg-blue-100',
-    buttonColor: 'bg-blue-600',
+    price: '€19.99/mes',
+    listings: 5,
+    photos: 20,
+    features: ['5 anuncios activos', 'Hasta 20 fotos por anuncio', 'Soporte prioritario', 'Panel avanzado', 'Estadísticas detalladas', 'Promoción destacada'],
+    color: 'bg-purple-100',
+    buttonColor: 'bg-purple-600',
     popular: true
   },
   {
-    id: 'professional',
-    name: 'Professional',
+    id: 'diamante',
+    name: 'Diamante',
     icon: <Zap className="h-5 w-5" />,
-    price: '19.99€/mes',
+    price: '€39.99/mes',
     listings: -1,
-    photos: 30,
-    features: ['Anuncios ilimitados', '30 fotos por anuncio', 'Posición premium', 'Analytics avanzados', 'Gestión de múltiples propiedades', 'Soporte 24/7'],
-    color: 'bg-purple-100',
-    buttonColor: 'bg-purple-600'
+    photos: 50,
+    features: ['Anuncios ilimitados', 'Hasta 50 fotos por anuncio', 'Soporte VIP 24/7', 'Panel premium', 'Analytics avanzados', 'Promoción premium', 'Acceso beta features'],
+    color: 'bg-yellow-100',
+    buttonColor: 'bg-yellow-600'
   }
 ];
 
@@ -69,10 +69,10 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
       // Create checkout session for Stripe
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
-          priceId: getPriceId(planId),
-          userId: userId,
           planType: planId,
-          mode: currentPlan === 'basic' ? 'subscription' : 'subscription_update'
+          planName: plans.find(p => p.id === planId)?.name || planId,
+          userId: userId,
+          mode: currentPlan === 'básico' ? 'subscription' : 'subscription_update'
         }
       });
 
@@ -104,7 +104,7 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
       const { error } = await supabase
         .from('subscriptions')
         .update({
-          plan_type: planId,
+          plan: planId,
           status: 'active',
           // Mark for end-of-period change
           cancel_at_period_end: true
@@ -133,18 +133,18 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
   };
 
   const getPriceId = (planId: string) => {
-    // These should match your Stripe price IDs
+    // Real Stripe product IDs
     const priceIds = {
-      basic: '', // Free plan has no price ID
-      premium: 'price_premium_monthly', // Replace with actual Stripe price ID
-      professional: 'price_professional_monthly' // Replace with actual Stripe price ID
+      'básico': 'prod_SrhgM76Jw1lKcn',
+      'premium': 'prod_SrhhsvazdNDKRG', 
+      'diamante': 'prod_Srhhbxz0I6mEs5'
     };
     return priceIds[planId as keyof typeof priceIds];
   };
 
   const isCurrentPlan = (planId: string) => planId === currentPlan;
   const isUpgrade = (planId: string) => {
-    const planOrder = { basic: 0, premium: 1, professional: 2 };
+    const planOrder = { 'básico': 0, premium: 1, diamante: 2 };
     return planOrder[planId as keyof typeof planOrder] > planOrder[currentPlan as keyof typeof planOrder];
   };
 

@@ -7,6 +7,7 @@ import {
   Users, 
   CreditCard, 
   Home as HomeIcon, 
+  Calendar,
   BarChart3, 
   Settings,
   LogOut,
@@ -44,6 +45,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: 'Anuncios',
       href: '/admin/listings',
       icon: HomeIcon,
+    },
+    {
+      name: 'Reservas',
+      href: '/admin/bookings',
+      icon: Calendar,
     },
     {
       name: 'Usuarios',

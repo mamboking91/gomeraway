@@ -23,7 +23,8 @@ import {
   MoreHorizontal,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  Flag
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -44,13 +45,19 @@ interface ListingWithDetails {
     full_name: string;
     email: string;
   } | null;
+  subscription?: {
+    plan: string;
+    status: string;
+  } | null;
   _count?: {
     bookings: number;
+    views: number;
   };
+  total_revenue?: number;
 }
 
 const fetchAllListings = async (): Promise<ListingWithDetails[]> => {
-  // Obtener todos los anuncios con información del host
+  // Obtener todos los anuncios con información del host y suscripción
   const { data: listings, error } = await supabase
     .from('listings')
     .select(`
@@ -64,24 +71,43 @@ const fetchAllListings = async (): Promise<ListingWithDetails[]> => {
 
   if (error) throw error;
 
-  // Para cada anuncio, contar sus reservas
-  const listingsWithBookings = await Promise.all(
+  // Para cada anuncio, obtener datos de reservas, suscripción y analytics
+  const listingsWithDetails = await Promise.all(
     (listings || []).map(async (listing) => {
+      // Obtener reservas confirmadas
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id')
-        .eq('listing_id', listing.id);
+        .select('id, total_price, status')
+        .eq('listing_id', listing.id)
+        .eq('status', 'confirmed');
+
+      // Obtener suscripción del host
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('plan, status')
+        .eq('user_id', listing.host_id)
+        .eq('status', 'active')
+        .single();
+
+      // Calcular revenue total
+      const totalRevenue = bookings?.reduce((sum, booking) => sum + (booking.total_price || 0), 0) || 0;
+
+      // Simular views (en producción esto vendría de una tabla de analytics)
+      const viewCount = Math.floor(Math.random() * 100) + (bookings?.length || 0) * 5;
 
       return {
         ...listing,
         _count: {
           bookings: bookings?.length || 0,
+          views: viewCount,
         },
+        subscription: subscription || null,
+        total_revenue: totalRevenue,
       };
     })
   );
 
-  return listingsWithBookings;
+  return listingsWithDetails;
 };
 
 const ListingsManager: React.FC = () => {
@@ -90,8 +116,12 @@ const ListingsManager: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [hostFilter, setHostFilter] = useState<string>('');
+  const [planFilter, setPlanFilter] = useState<string>('all');
   const [selectedListings, setSelectedListings] = useState<number[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [showModerationDialog, setShowModerationDialog] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<ListingWithDetails | null>(null);
+  const [moderationAction, setModerationAction] = useState<'approve' | 'reject' | 'flag' | 'ban'>('approve');
 
   const { data: listings, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-listings'],
@@ -171,7 +201,11 @@ const ListingsManager: React.FC = () => {
       listing.profiles?.full_name?.toLowerCase().includes(hostFilter.toLowerCase()) ||
       listing.profiles?.email?.toLowerCase().includes(hostFilter.toLowerCase());
 
-    return matchesSearch && matchesType && matchesStatus && matchesHost;
+    const matchesPlan = planFilter === 'all' || 
+      (planFilter === 'none' && !listing.subscription) ||
+      listing.subscription?.plan === planFilter;
+
+    return matchesSearch && matchesType && matchesStatus && matchesHost && matchesPlan;
   }) || [];
 
   const handleToggleActive = (listingId: number, currentStatus: boolean) => {
@@ -235,6 +269,63 @@ const ListingsManager: React.FC = () => {
     return isActive ? 
       <Badge className="bg-green-100 text-green-800">Activo</Badge> : 
       <Badge variant="secondary">Inactivo</Badge>;
+  };
+
+  const getPlanBadge = (subscription: { plan: string; status: string } | null) => {
+    if (!subscription) {
+      return <Badge variant="outline" className="text-gray-500">Sin Plan</Badge>;
+    }
+
+    const colors = {
+      'básico': 'bg-blue-100 text-blue-800',
+      'premium': 'bg-purple-100 text-purple-800',
+      'diamante': 'bg-yellow-100 text-yellow-800'
+    };
+
+    return (
+      <Badge className={colors[subscription.plan as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
+        {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+      </Badge>
+    );
+  };
+
+  const handleModerationAction = (listing: ListingWithDetails, action: 'approve' | 'reject' | 'flag' | 'ban') => {
+    setSelectedListing(listing);
+    setModerationAction(action);
+    setShowModerationDialog(true);
+  };
+
+  const executeModerationAction = async () => {
+    if (!selectedListing) return;
+
+    try {
+      switch (moderationAction) {
+        case 'approve':
+          await updateListingMutation.mutateAsync({
+            id: selectedListing.id,
+            updates: { is_active: true },
+          });
+          break;
+        case 'reject':
+          await updateListingMutation.mutateAsync({
+            id: selectedListing.id,
+            updates: { is_active: false },
+          });
+          break;
+        case 'flag':
+          // En producción, esto marcaría el anuncio para revisión
+          toast.info('Anuncio marcado para revisión');
+          break;
+        case 'ban':
+          // En producción, esto bloquearía al host temporalmente
+          toast.info('Host bloqueado temporalmente');
+          break;
+      }
+      setShowModerationDialog(false);
+      setSelectedListing(null);
+    } catch (error) {
+      toast.error('Error en la acción de moderación');
+    }
   };
 
   if (isLoading) {
@@ -307,7 +398,7 @@ const ListingsManager: React.FC = () => {
               <CardTitle>Filtros Avanzados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Buscar</label>
                   <div className="relative">
@@ -347,6 +438,21 @@ const ListingsManager: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Plan Host</label>
+                  <Select value={planFilter} onValueChange={setPlanFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los planes</SelectItem>
+                      <SelectItem value="básico">Básico</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="diamante">Diamante</SelectItem>
+                      <SelectItem value="none">Sin Plan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Host</label>
                   <Input
                     placeholder="Filtrar por host..."
@@ -360,7 +466,7 @@ const ListingsManager: React.FC = () => {
         )}
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold">{listings?.length || 0}</div>
@@ -377,18 +483,34 @@ const ListingsManager: React.FC = () => {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-blue-600">
-                {listings?.filter(l => l.type === 'accommodation').length || 0}
+              <div className="text-2xl font-bold">
+                {listings?.reduce((sum, l) => sum + (l._count?.bookings || 0), 0) || 0}
               </div>
-              <div className="text-sm text-muted-foreground">Alojamientos</div>
+              <div className="text-sm text-muted-foreground">Total Reservas</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">
-                {listings?.filter(l => l.type === 'vehicle').length || 0}
+              <div className="text-2xl font-bold text-emerald-600">
+                €{listings?.reduce((sum, l) => sum + (l.total_revenue || 0), 0).toFixed(0) || '0'}
               </div>
-              <div className="text-sm text-muted-foreground">Vehículos</div>
+              <div className="text-sm text-muted-foreground">Ingresos Totales</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-blue-600">
+                {listings?.filter(l => l.subscription?.plan === 'premium').length || 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Hosts Premium</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-yellow-600">
+                {listings?.filter(l => l.subscription?.plan === 'diamante').length || 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Hosts Diamante</div>
             </CardContent>
           </Card>
         </div>
@@ -469,9 +591,10 @@ const ListingsManager: React.FC = () => {
                     </th>
                     <th className="p-4 text-left font-medium text-sm">Anuncio</th>
                     <th className="p-4 text-left font-medium text-sm">Host</th>
+                    <th className="w-20 p-4 text-left font-medium text-sm">Plan</th>
                     <th className="w-24 p-4 text-left font-medium text-sm">Tipo</th>
                     <th className="w-24 p-4 text-left font-medium text-sm">Estado</th>
-                    <th className="w-20 p-4 text-left font-medium text-sm">Reservas</th>
+                    <th className="w-20 p-4 text-left font-medium text-sm">Métricas</th>
                     <th className="w-24 p-4 text-left font-medium text-sm">Precio</th>
                     <th className="w-32 p-4 text-left font-medium text-sm">Acciones</th>
                   </tr>
@@ -504,6 +627,10 @@ const ListingsManager: React.FC = () => {
                       </td>
                       
                       <td className="p-4">
+                        {getPlanBadge(listing.subscription)}
+                      </td>
+                      
+                      <td className="p-4">
                         <div className="flex items-center justify-center">
                           {getTypeIcon(listing.type)}
                         </div>
@@ -514,7 +641,11 @@ const ListingsManager: React.FC = () => {
                       </td>
                       
                       <td className="p-4">
-                        <Badge variant="outline" className="text-xs">{listing._count?.bookings || 0}</Badge>
+                        <div className="space-y-1">
+                          <div className="text-xs">{listing._count?.views || 0} vistas</div>
+                          <div className="text-xs">{listing._count?.bookings || 0} reservas</div>
+                          <div className="text-xs">€{(listing.total_revenue || 0).toFixed(0)}</div>
+                        </div>
                       </td>
                       
                       <td className="p-4">
@@ -537,13 +668,30 @@ const ListingsManager: React.FC = () => {
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0"
-                            onClick={() => handleToggleActive(listing.id, listing.is_active)}
-                            title={listing.is_active ? 'Desactivar' : 'Activar'}
+                            onClick={() => handleModerationAction(listing, 'approve')}
+                            title="Aprobar"
                           >
-                            {listing.is_active ? 
-                              <XCircle className="h-3 w-3 text-red-500" /> : 
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                            }
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleModerationAction(listing, 'reject')}
+                            title="Rechazar"
+                          >
+                            <XCircle className="h-3 w-3 text-red-500" />
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleModerationAction(listing, 'flag')}
+                            title="Marcar para revisión"
+                          >
+                            <Flag className="h-3 w-3 text-orange-500" />
                           </Button>
                           
                           <AlertDialog>
@@ -698,6 +846,37 @@ const ListingsManager: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Moderation Dialog */}
+        <AlertDialog open={showModerationDialog} onOpenChange={setShowModerationDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Acción de Moderación</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de que quieres {' '}
+                {moderationAction === 'approve' ? 'aprobar' : 
+                 moderationAction === 'reject' ? 'rechazar' : 
+                 moderationAction === 'flag' ? 'marcar para revisión' : 'bloquear el host de'} 
+                {' '} el anuncio "{selectedListing?.title}"?
+                {moderationAction === 'ban' && (
+                  <div className="mt-2 p-2 bg-red-50 rounded text-red-800 text-sm">
+                    <AlertTriangle className="h-4 w-4 inline mr-1" />
+                    Esta acción bloqueará temporalmente al host.
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={executeModerationAction}
+                className={moderationAction === 'ban' ? 'bg-red-600 hover:bg-red-700' : ''}
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );

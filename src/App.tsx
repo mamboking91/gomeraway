@@ -20,7 +20,9 @@ import EditListing from "./pages/EditListing";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import SubscriptionsManager from "./pages/admin/SubscriptionsManager";
 import ListingsManager from "./pages/admin/ListingsManager";
+import BookingsManager from "./pages/admin/BookingsManager";
 import UsersManager from "./pages/admin/UsersManager";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 
 const queryClient = new QueryClient();
@@ -50,7 +52,9 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/subscriptions" element={<SubscriptionsManager />} />
             <Route path="/admin/listings" element={<ListingsManager />} />
+            <Route path="/admin/bookings" element={<BookingsManager />} />
             <Route path="/admin/users" element={<UsersManager />} />
+            <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

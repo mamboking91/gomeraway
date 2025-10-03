@@ -11,7 +11,6 @@ const corsHeaders = {
 // Plan limits configuration
 const PLAN_LIMITS = {
   'básico': 1,
-  'basico': 1,
   'premium': 5,
   'diamante': -1, // -1 means unlimited
 } as const;
@@ -66,7 +65,7 @@ Deno.serve(async (req) => {
       throw new Error('Error checking subscription status');
     }
 
-    // Default to no plan if no active subscription found
+    // Get plan name, no default since we check subscription status below
     const planName = subscription?.plan?.toLowerCase() || 'none';
     console.log('User plan:', planName);
 

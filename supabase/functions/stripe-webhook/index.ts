@@ -57,7 +57,12 @@ Deno.serve(async (req) => {
         console.log('Processing subscription payment');
         const userId = session.metadata?.user_id;
         const subscriptionId = session.subscription;
-        const plan = (session.metadata?.plan_name || 'basico').toLowerCase();
+        const planName = session.metadata?.plan_name || 'Básico';
+        // Normalize plan name to match our database enum
+        const plan = planName.toLowerCase() === 'básico' ? 'básico' : 
+                     planName.toLowerCase() === 'premium' ? 'premium' : 
+                     planName.toLowerCase() === 'diamante' ? 'diamante' :
+                     'básico'; // fallback
 
         if (!userId) throw new Error('User ID not found in subscription metadata.');
 
@@ -84,7 +89,7 @@ Deno.serve(async (req) => {
         console.log('Booking metadata:', { user_id, listing_id, start_date, end_date, total_price });
         
         if (!user_id || !listing_id || !start_date || !end_date || !total_price) {
-          const missing = [];
+          const missing: string[] = [];
           if (!user_id) missing.push('user_id');
           if (!listing_id) missing.push('listing_id');
           if (!start_date) missing.push('start_date');

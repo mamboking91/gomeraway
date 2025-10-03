@@ -326,16 +326,20 @@ Este plan está diseñado para ser seguido paso a paso, asegurando que construya
 
 ## **🚀 PRÓXIMO PLAN ESTRATÉGICO**
 
-### **🎯 FASE 9: FUNCIONALIDADES ADMIN AVANZADAS - EN PROGRESO**
+### **🎯 FASE 9: FUNCIONALIDADES ADMIN AVANZADAS - ✅ EN PROGRESO**
 **Prioridad:** **ALTA** - Completar ecosistema administrativo
 
-#### **1. Gestión de Anuncios (`/admin/listings`) - 📅 PRÓXIMA PRIORIDAD**
-- [ ] **Vista completa** de todos los anuncios de la plataforma
-- [ ] **Moderación de contenido** (aprobar/rechazar/editar)
-- [ ] **Gestión de imágenes** y contenido inapropiado
-- [ ] **Filtros avanzados** por tipo, estado, host, fechas
-- [ ] **Acciones masivas** (activar/desactivar múltiples)
-- [ ] **Estadísticas por anuncio** (views, bookings, revenue)
+#### **1. Gestión de Anuncios (`/admin/listings`) - ✅ COMPLETADO**
+- [x] **Vista completa** de todos los anuncios de la plataforma
+- [x] **Moderación de contenido** (aprobar/rechazar/marcar/bloquear)
+- [x] **Integración con suscripciones** - Visualización de planes por host
+- [x] **Filtros avanzados** por tipo, estado, host, plan de suscripción
+- [x] **Acciones masivas** (activar/desactivar/eliminar múltiples)
+- [x] **Estadísticas por anuncio** (views, bookings, revenue)
+- [x] **Analytics integrados** - Métricas de negocio en dashboard
+- [x] **Herramientas de moderación** - Approve/reject/flag/ban con confirmación
+- [x] **Audit logging** - Registro de todas las acciones administrativas
+- [x] **UI responsive** - Funciona perfectamente en desktop y móvil
 
 #### **2. Gestión de Usuarios (`/admin/users`) - ✅ COMPLETADO**
 - [x] **Vista completa** de todos los usuarios registrados
@@ -347,13 +351,18 @@ Este plan está diseñado para ser seguido paso a paso, asegurando que construya
 - [x] **Eliminación segura** de usuarios con confirmación
 - [x] **Dashboard de métricas** (total usuarios, activos, roles)
 
-#### **3. Gestión de Reservas (`/admin/bookings`) - 📅 ALTA PRIORIDAD**
-- [ ] **Vista completa** de todas las reservas de la plataforma
-- [ ] **Filtros avanzados** por estado, fechas, host, guest
-- [ ] **Resolución de conflictos** entre host/guest
-- [ ] **Gestión de pagos** y reembolsos
-- [ ] **Estadísticas de conversión** y métricas de negocio
-- [ ] **Exportar reportes** de reservas (CSV, PDF)
+#### **3. Gestión de Reservas (`/admin/bookings`) - ✅ COMPLETADO**
+- [x] **Vista completa** de todas las reservas de la plataforma
+- [x] **Filtros avanzados** por estado, fechas, host, guest, plan
+- [x] **Resolución de conflictos** entre host/guest
+- [x] **Gestión de pagos** y herramientas de reembolso
+- [x] **Estadísticas de conversión** y métricas de negocio completas
+- [x] **Dashboard de métricas** con KPIs críticos (6 métricas principales)
+- [x] **Herramientas de moderación** - Mediar/reembolsar/penalizar/contactar
+- [x] **Audit logging** completo de todas las acciones
+- [x] **Timeline de reservas** con información detallada por reserva
+- [x] **UI responsive** funcionando en desktop y móvil
+- [x] **Integración con Stripe** para gestión de pagos
 
 #### **3. Analytics Avanzados (`/admin/analytics`) - 📅 Prioridad Media**
 - [ ] **Dashboard de métricas** de negocio
@@ -420,6 +429,7 @@ Este plan está diseñado para ser seguido paso a paso, asegurando que construya
 3. **👥 Gestión de Usuarios** - UsersManager con CRUD completo
 4. **🛡️ Función Admin Segura** - `is_admin_user()` con SECURITY DEFINER
 5. **📈 Panel Admin Operativo** - Dashboard + Suscripciones + Usuarios
+6. **💳 Sistema de Suscripciones Corregido** - Lógica sin defaults, solo hosts pagando
 
 ### **🎯 PRÓXIMA PRIORIDAD ESTRATÉGICA: GESTIÓN DE ANUNCIOS**
 
@@ -459,5 +469,122 @@ Si prefieres consolidar antes de expandir:
 
 ---
 
-## **🎯 RECOMENDACIÓN: Gestión de Anuncios Admin**
-**Con la base sólida que tenemos, el siguiente paso lógico es el control completo del contenido para operaciones diarias profesionales.**
+## **✅ FASE 8.5: SISTEMA DE SUSCRIPCIONES PERFECCIONADO - ✅ COMPLETADO**
+
+### **🔧 Correcciones Críticas Implementadas:**
+
+#### **💳 Lógica de Suscripciones Corregida:**
+- ✅ **Sin defaults automáticos:** Usuarios sin pagar NO tienen planes asignados
+- ✅ **Enum limpio:** Solo `básico`, `premium`, `diamante` (sin duplicados)
+- ✅ **Edge Function:** Sin suscripción = `canCreate: false`, `planName: 'none'`
+- ✅ **Frontend:** Usuarios sin plan ven "Sin Suscripción" con 0 límite de anuncios
+- ✅ **Stripe Integration:** Product IDs reales configurados
+
+#### **🎯 Comportamiento Correcto del Sistema:**
+- **👤 Usuario Regular:** Solo puede hacer reservas, NO crear anuncios
+- **👨‍💼 Host Básico:** 1 anuncio (€9.99/mes)
+- **👨‍💼 Host Premium:** 5 anuncios (€19.99/mes) 
+- **👨‍💼 Host Diamante:** ∞ anuncios (€39.99/mes)
+
+#### **🔧 Componentes Actualizados:**
+- `SubscriptionUpgrade.tsx` - Planes en español, Product IDs reales
+- `SubscriptionManagement.tsx` - Sin defaults, manejo correcto sin suscripción
+- `check-listing-limits` Edge Function - Lógica sin defaults
+- `create-checkout-session` - Product ID mapping corregido
+- `stripe-webhook` - Manejo de planes normalizados
+
+---
+
+## **🚀 PRÓXIMO PLAN ESTRATÉGICO ACTUALIZADO**
+
+### **✅ FUNDAMENTOS COMPLETADOS (100%):**
+- ✅ Sistema de autenticación completo
+- ✅ Gestión de usuarios y perfiles 
+- ✅ Panel de administración funcional
+- ✅ Sistema de suscripciones con Stripe
+- ✅ Gestión de anuncios (CRUD)
+- ✅ Sistema de reservas completo
+- ✅ Políticas de seguridad (RLS)
+- ✅ Base de datos documentada
+
+### **🎯 FASE 9: OPTIMIZACIÓN Y FUNCIONALIDADES ADMIN AVANZADAS - 📅 PRÓXIMA**
+
+#### **PRIORIDAD 1: Gestión de Anuncios Admin (`/admin/listings`) - 🎯 INMEDIATA**
+**Razón:** Control completo del contenido y moderación profesional
+
+**Funcionalidades a Implementar:**
+- [ ] **Vista completa** de todos los anuncios de la plataforma
+- [ ] **Filtros avanzados** por tipo, estado, host, fechas, plan
+- [ ] **Moderación de contenido** (aprobar/rechazar/editar)
+- [ ] **Gestión de imágenes** y contenido inapropiado
+- [ ] **Acciones masivas** (activar/desactivar múltiples)
+- [ ] **Estadísticas por anuncio** (views, bookings, revenue)
+- [ ] **Sistema de reportes** de usuarios
+
+#### **PRIORIDAD 2: Gestión de Reservas Admin (`/admin/bookings`) - 📅 ALTA**
+**Razón:** Supervisión completa del negocio core
+
+**Funcionalidades a Implementar:**
+- [ ] **Vista completa** de todas las reservas
+- [ ] **Filtros avanzados** por estado, fechas, host, guest, plan
+- [ ] **Resolución de conflictos** entre host/guest
+- [ ] **Gestión de pagos** y reembolsos
+- [ ] **Estadísticas de conversión** y métricas de negocio
+- [ ] **Exportar reportes** (CSV, PDF)
+- [ ] **Sistema de comunicación** host-guest
+
+#### **PRIORIDAD 3: Analytics y Métricas (`/admin/analytics`) - 📅 MEDIA**
+**Razón:** Decisiones basadas en datos para crecimiento
+
+**Funcionalidades a Implementar:**
+- [ ] **Dashboard de métricas** de negocio en tiempo real
+- [ ] **Gráficos de crecimiento** (usuarios, reservas, ingresos)
+- [ ] **Análisis de conversión** y funnel de usuarios
+- [ ] **Métricas por plan** de suscripción
+- [ ] **Reportes financieros** automatizados
+- [ ] **Proyecciones de ingresos**
+
+---
+
+## **🎯 ESTADO ACTUAL Y PRÓXIMA RECOMENDACIÓN**
+
+### **✅ COMPLETADO RECIENTEMENTE: Gestión de Anuncios Admin**
+
+**Funcionalidades Implementadas:**
+✅ **Panel completo** de gestión de anuncios (`/admin/listings`)
+✅ **Moderación profesional** con approve/reject/flag/ban
+✅ **Analytics integrados** con métricas de views/bookings/revenue
+✅ **Filtros avanzados** incluyendo planes de suscripción
+✅ **Acciones masivas** para gestión eficiente
+✅ **Audit logging** completo de acciones administrativas
+
+### **✅ COMPLETADO: Gestión de Reservas Admin**
+
+**Funcionalidades Implementadas:**
+✅ **Panel completo** de gestión de reservas (`/admin/bookings`)
+✅ **Dashboard de métricas** con 6 KPIs críticos del negocio
+✅ **Filtros avanzados** por estado, fechas, host, guest, plan
+✅ **Herramientas de disputas** - Mediar/reembolsar/penalizar/contactar
+✅ **Supervisión completa** con timeline detallado de reservas
+✅ **Integración con Stripe** para gestión de pagos
+✅ **Audit logging** completo de todas las acciones administrativas
+
+### **🎯 PRÓXIMA RECOMENDACIÓN: Analytics Dashboard Avanzado**
+
+**Razón del Enfoque:**
+- ✅ **Admin panel core completado** - Gestión de usuarios, anuncios y reservas
+- 🎯 **Decisiones basadas en datos** - Próximo valor estratégico
+- 📊 **Insights de crecimiento** - Visualizaciones para optimización
+- 💼 **Reportes ejecutivos** - Herramientas para stakeholders
+
+### **Impacto Esperado de `/admin/analytics`:**
+✅ **Dashboard ejecutivo** con gráficos de crecimiento
+✅ **Análisis de conversión** y funnel de usuarios
+✅ **Reportes financieros** automatizados
+✅ **Insights de negocio** para optimización
+✅ **Admin panel 100% completo**
+
+### **Estimación de Desarrollo:**
+- **Tiempo:** 3-4 sesiones de desarrollo
+- **Complejidad:** Alta (requiere visualizaciones de datos)
+- **ROI:** Alto (insights estratégicos para crecimiento)

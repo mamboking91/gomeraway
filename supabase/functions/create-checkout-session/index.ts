@@ -36,9 +36,21 @@ Deno.serve(async (req) => {
       throw new Error('User not found.');
     }
 
-    const { priceId, planName } = await req.json();
-    if (!priceId || !planName) {
-      throw new Error('priceId and planName are required.');
+    const { planType, planName } = await req.json();
+    if (!planType || !planName) {
+      throw new Error('planType and planName are required.');
+    }
+
+    // Map product IDs to price IDs for subscriptions
+    const PLAN_PRICE_IDS = {
+      'básico': 'prod_SrhgM76Jw1lKcn',
+      'premium': 'prod_SrhhsvazdNDKRG', 
+      'diamante': 'prod_Srhhbxz0I6mEs5'
+    };
+
+    const priceId = PLAN_PRICE_IDS[planType as keyof typeof PLAN_PRICE_IDS];
+    if (!priceId) {
+      throw new Error(`Invalid plan type: ${planType}`);
     }
 
     const session = await stripe.checkout.sessions.create({
