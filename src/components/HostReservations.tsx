@@ -5,7 +5,9 @@ import type { Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, MapPin, User, Euro, Check, X } from 'lucide-react';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { getSupabaseImageUrl } from '@/utils/imageUtils';
+import { CalendarDays, MapPin, User, Euro, Check, X, Home, Car } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 
@@ -118,15 +120,6 @@ const HostReservations: React.FC = () => {
     enabled: !!session?.user?.id,
   });
 
-  // Debug: Log bookings to console
-  React.useEffect(() => {
-    if (bookings) {
-      console.log('HostReservations Debug:', bookings);
-      bookings.forEach(booking => {
-        console.log(`Host Booking ${booking.id}: status=${booking.status}, created_at=${booking.created_at}`);
-      });
-    }
-  }, [bookings]);
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
@@ -143,7 +136,6 @@ const HostReservations: React.FC = () => {
       toast.success(t('host.bookingStatusUpdated'));
     },
     onError: (error) => {
-      console.error('Error updating booking status:', error);
       toast.error(t('host.bookingStatusError'));
     },
   });
@@ -226,13 +218,29 @@ const HostReservations: React.FC = () => {
           <Card key={booking.id} className="overflow-hidden">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">
-                    {booking.listings?.title || 'Anuncio'}
-                  </CardTitle>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {booking.listings?.location || 'Ubicación no disponible'}
+                <div className="flex space-x-4">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
+                    <OptimizedImage
+                      src={getSupabaseImageUrl(
+                        booking.listings?.images_urls && booking.listings.images_urls.length > 0 
+                          ? booking.listings.images_urls[0] 
+                          : null
+                      ).url}
+                      alt={booking.listings?.title || 'Anuncio'}
+                      className="w-full h-full object-cover"
+                      aspectRatio="square"
+                      sizes="80px"
+                      fallback={`data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23f3f4f6"/><g transform="translate(20,20)">${booking.listings?.type === 'accommodation' ? '<path d="M3 9v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9" stroke="%236b7280" stroke-width="2" fill="none"/><path d="M21 9l-6-6H5L3 9" stroke="%236b7280" stroke-width="2" fill="none"/>' : '<path d="M3 14h18l-9-8-9 8z" stroke="%236b7280" stroke-width="2" fill="none"/><path d="M3 14h18v7H3z" stroke="%236b7280" stroke-width="2" fill="none"/><circle cx="8" cy="18" r="2" stroke="%236b7280" stroke-width="2" fill="none"/><circle cx="16" cy="18" r="2" stroke="%236b7280" stroke-width="2" fill="none"/>'}</g></svg>`}
+                    />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <CardTitle className="text-lg">
+                      {booking.listings?.title || 'Anuncio'}
+                    </CardTitle>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {booking.listings?.location || 'Ubicación no disponible'}
+                    </div>
                   </div>
                 </div>
                 {getStatusBadge(booking.status)}

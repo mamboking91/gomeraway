@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal';
-import { MapPin, Users, Settings, Fuel, AlertTriangle } from 'lucide-react';
+import { MapPin, Users, Settings, Fuel, AlertTriangle, Home, Bath, Car, Zap, Cog } from 'lucide-react';
 import { ImageGallery } from '@/components/OptimizedImage';
 import { getSupabaseImageUrls } from '@/utils/imageUtils';
 import { Button } from '@/components/ui/button';
@@ -179,17 +179,139 @@ const ListingDetailPage = () => {
               
               <h2 className="text-2xl font-semibold border-b pb-2 my-4">Detalles</h2>
               {listing.type === 'accommodation' && listing.listing_details_accommodation && (
-                <div className="space-y-2 text-foreground">
-                  <div className="flex items-center"><Users className="h-4 w-4 mr-2" /> {listing.listing_details_accommodation.guests} huéspedes</div>
-                  <div>{listing.listing_details_accommodation.bedrooms} dormitorios</div>
-                  <div>{listing.listing_details_accommodation.bathrooms} baños</div>
+                <div className="space-y-3 text-foreground">
+                  {/* Información básica de la propiedad */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                      <Users className="h-5 w-5 mr-3 text-green-600" /> 
+                      <div>
+                        <span className="text-sm text-gray-600">Capacidad</span>
+                        <div className="font-medium">{listing.listing_details_accommodation.max_guests || listing.listing_details_accommodation.guests} huéspedes</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                      <Home className="h-5 w-5 mr-3 text-blue-600" /> 
+                      <div>
+                        <span className="text-sm text-gray-600">Dormitorios</span>
+                        <div className="font-medium">{listing.listing_details_accommodation.bedrooms} dormitorios</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                      <Bath className="h-5 w-5 mr-3 text-cyan-600" /> 
+                      <div>
+                        <span className="text-sm text-gray-600">Baños</span>
+                        <div className="font-medium">{listing.listing_details_accommodation.bathrooms} baños</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Servicios y comodidades */}
+                  {listing.listing_details_accommodation.features && Array.isArray(listing.listing_details_accommodation.features) && listing.listing_details_accommodation.features.length > 0 && (
+                    <div className="mt-6 pt-4 border-t">
+                      <h4 className="font-semibold text-lg mb-3 flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-blue-600" />
+                        Servicios y Comodidades
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {listing.listing_details_accommodation.features.map((feature, index) => (
+                          <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {listing.type === 'vehicle' && listing.listing_details_vehicle && (
-                 <div className="space-y-2 text-foreground">
-                  <div className="flex items-center"><Users className="h-4 w-4 mr-2" /> {listing.listing_details_vehicle.seats} asientos</div>
-                  <div className="flex items-center"><Fuel className="h-4 w-4 mr-2" /> {listing.listing_details_vehicle.fuel}</div>
-                  <div className="flex items-center"><Settings className="h-4 w-4 mr-2" /> {listing.listing_details_vehicle.transmission}</div>
+                 <div className="space-y-3 text-foreground">
+                  {/* Información básica del vehículo */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {listing.listing_details_vehicle.vehicle_type && (
+                      <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                        <Car className="h-5 w-5 mr-3 text-blue-600" /> 
+                        <div>
+                          <span className="text-sm text-gray-600">Tipo de vehículo</span>
+                          <div className="font-medium">
+                            {listing.listing_details_vehicle.vehicle_type === 'car' ? 'Coche' : 
+                            listing.listing_details_vehicle.vehicle_type === 'suv' ? 'SUV' :
+                            listing.listing_details_vehicle.vehicle_type === 'van' ? 'Furgoneta' :
+                            listing.listing_details_vehicle.vehicle_type === 'motorcycle' ? 'Motocicleta' :
+                            listing.listing_details_vehicle.vehicle_type === 'bike' ? 'Bicicleta' :
+                            listing.listing_details_vehicle.vehicle_type}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                      <Users className="h-5 w-5 mr-3 text-green-600" /> 
+                      <div>
+                        <span className="text-sm text-gray-600">Capacidad</span>
+                        <div className="font-medium">{listing.listing_details_vehicle.seats} asientos</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Especificaciones técnicas */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {listing.listing_details_vehicle.fuel && (
+                      <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                        {listing.listing_details_vehicle.fuel === 'electric' ? (
+                          <Zap className="h-5 w-5 mr-3 text-yellow-600" />
+                        ) : (
+                          <Fuel className="h-5 w-5 mr-3 text-orange-600" />
+                        )}
+                        <div>
+                          <span className="text-sm text-gray-600">Combustible</span>
+                          <div className="font-medium">
+                            {listing.listing_details_vehicle.fuel === 'gasoline' ? 'Gasolina' :
+                            listing.listing_details_vehicle.fuel === 'diesel' ? 'Diesel' :
+                            listing.listing_details_vehicle.fuel === 'electric' ? 'Eléctrico' :
+                            listing.listing_details_vehicle.fuel === 'hybrid' ? 'Híbrido' :
+                            listing.listing_details_vehicle.fuel === 'none' ? 'Sin motor' :
+                            listing.listing_details_vehicle.fuel}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {listing.listing_details_vehicle.transmission && (
+                      <div className="flex items-center bg-gray-50 p-3 rounded-lg">
+                        <Cog className="h-5 w-5 mr-3 text-purple-600" /> 
+                        <div>
+                          <span className="text-sm text-gray-600">Transmisión</span>
+                          <div className="font-medium">
+                            {listing.listing_details_vehicle.transmission === 'manual' ? 'Manual' :
+                            listing.listing_details_vehicle.transmission === 'automatic' ? 'Automática' :
+                            listing.listing_details_vehicle.transmission === 'none' ? 'Sin transmisión' :
+                            listing.listing_details_vehicle.transmission}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Características adicionales */}
+                  {listing.listing_details_vehicle.features && Array.isArray(listing.listing_details_vehicle.features) && listing.listing_details_vehicle.features.length > 0 && (
+                    <div className="mt-6 pt-4 border-t">
+                      <h4 className="font-semibold text-lg mb-3 flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-blue-600" />
+                        Características del Vehículo
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {listing.listing_details_vehicle.features.map((feature, index) => (
+                          <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {/* 👆 FIN DEL CÓDIGO RESTAURADO 👆 */}

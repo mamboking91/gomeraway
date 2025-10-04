@@ -32,6 +32,8 @@ const listingSchema = z.object({
   bedrooms: z.number().min(0).optional(),
   bathrooms: z.number().min(0).optional(),
   vehicle_type: z.string().optional(),
+  fuel: z.string().optional(),
+  transmission: z.string().optional(),
   seats: z.number().min(1).optional(),
   amenities: z.string().optional(),
 });
@@ -130,8 +132,11 @@ const EditListing = () => {
         bedrooms: listingData.bedrooms || undefined,
         bathrooms: listingData.bathrooms || undefined,
         vehicle_type: listingData.vehicle_type || undefined,
+        fuel: listingData.fuel || undefined,
+        transmission: listingData.transmission || undefined,
         seats: listingData.seats || undefined,
-        amenities: listingData.amenities || listingData.features || '',
+        amenities: listingData.amenities || 
+                   (Array.isArray(listingData.features) ? listingData.features.join(', ') : listingData.features) || '',
       });
       
       // Inicializar imágenes
@@ -168,10 +173,10 @@ const EditListing = () => {
       if (data.type === 'accommodation') {
         const accommodationDetails = {
           listing_id: id,
-          ...(data.max_guests && { max_guests: data.max_guests }),
-          ...(data.bedrooms && { bedrooms: data.bedrooms }),
-          ...(data.bathrooms && { bathrooms: data.bathrooms }),
-          ...(data.amenities && { amenities: data.amenities }),
+          max_guests: data.max_guests || null,
+          bedrooms: data.bedrooms || null,
+          bathrooms: data.bathrooms || null,
+          features: data.amenities ? data.amenities.split(',').map(f => f.trim()) : null,
         };
 
         // Usar upsert para crear o actualizar
@@ -180,16 +185,18 @@ const EditListing = () => {
           .upsert(accommodationDetails, { onConflict: 'listing_id' });
 
         if (detailsError) {
-          console.warn('Error al actualizar detalles de alojamiento:', detailsError);
+          throw new Error(`Error al actualizar detalles de alojamiento: ${detailsError.message}`);
         }
       }
 
       if (data.type === 'vehicle') {
         const vehicleDetails = {
           listing_id: id,
-          ...(data.vehicle_type && { vehicle_type: data.vehicle_type }),
-          ...(data.seats && { seats: data.seats }),
-          ...(data.amenities && { features: data.amenities }),
+          vehicle_type: data.vehicle_type || null,
+          fuel: data.fuel || null,
+          transmission: data.transmission || null,
+          seats: data.seats || null,
+          features: data.amenities ? data.amenities.split(',').map(f => f.trim()) : null,
         };
 
         // Usar upsert para crear o actualizar
@@ -198,7 +205,7 @@ const EditListing = () => {
           .upsert(vehicleDetails, { onConflict: 'listing_id' });
 
         if (detailsError) {
-          console.warn('Error al actualizar detalles de vehículo:', detailsError);
+          throw new Error(`Error al actualizar detalles de vehículo: ${detailsError.message}`);
         }
       }
 
@@ -427,49 +434,101 @@ const EditListing = () => {
                     />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="vehicle_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Vehículo</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona el tipo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="car">Coche</SelectItem>
-                              <SelectItem value="suv">SUV</SelectItem>
-                              <SelectItem value="van">Furgoneta</SelectItem>
-                              <SelectItem value="motorcycle">Motocicleta</SelectItem>
-                              <SelectItem value="bike">Bicicleta</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="vehicle_type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipo de Vehículo</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona el tipo" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="car">Coche</SelectItem>
+                                <SelectItem value="suv">SUV</SelectItem>
+                                <SelectItem value="van">Furgoneta</SelectItem>
+                                <SelectItem value="motorcycle">Motocicleta</SelectItem>
+                                <SelectItem value="bike">Bicicleta</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="seats"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Número de Asientos</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="fuel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Combustible</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Tipo de combustible" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="gasoline">Gasolina</SelectItem>
+                                <SelectItem value="diesel">Diesel</SelectItem>
+                                <SelectItem value="electric">Eléctrico</SelectItem>
+                                <SelectItem value="hybrid">Híbrido</SelectItem>
+                                <SelectItem value="none">Sin motor (bicicleta)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="transmission"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Transmisión</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Tipo de transmisión" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="manual">Manual</SelectItem>
+                                <SelectItem value="automatic">Automática</SelectItem>
+                                <SelectItem value="none">Sin transmisión</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="seats"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Número de Asientos</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 )}
                 
