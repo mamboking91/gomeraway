@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import HostReservations from '@/components/HostReservations';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { getSupabaseImageUrl } from '@/utils/imageUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -391,12 +393,19 @@ const HostDashboard = () => {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex space-x-4">
-                          <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                            {listing.type === 'accommodation' ? (
-                              <Home className="h-8 w-8 text-muted-foreground" />
-                            ) : (
-                              <Car className="h-8 w-8 text-muted-foreground" />
-                            )}
+                          <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-muted">
+                            <OptimizedImage
+                              src={getSupabaseImageUrl(
+                                listing.images_urls && listing.images_urls.length > 0 
+                                  ? listing.images_urls[0] 
+                                  : null
+                              ).url}
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                              aspectRatio="square"
+                              sizes="80px"
+                              fallback={`data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23f3f4f6"/><g transform="translate(20,20)">${listing.type === 'accommodation' ? '<path d="M3 9v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9" stroke="%236b7280" stroke-width="2" fill="none"/><path d="M21 9l-6-6H5L3 9" stroke="%236b7280" stroke-width="2" fill="none"/>' : '<path d="M3 14h18l-9-8-9 8z" stroke="%236b7280" stroke-width="2" fill="none"/><path d="M3 14h18v7H3z" stroke="%236b7280" stroke-width="2" fill="none"/><circle cx="8" cy="18" r="2" stroke="%236b7280" stroke-width="2" fill="none"/><circle cx="16" cy="18" r="2" stroke="%236b7280" stroke-width="2" fill="none"/>'}</g></svg>`}
+                            />
                           </div>
                           
                           <div className="flex-1">
