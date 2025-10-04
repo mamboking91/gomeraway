@@ -7,6 +7,7 @@ import Footer from '@/components/footer';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal';
 import { MapPin, Users, Settings, Fuel, AlertTriangle } from 'lucide-react';
 import { ImageGallery } from '@/components/OptimizedImage';
+import { getSupabaseImageUrls } from '@/utils/imageUtils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, differenceInCalendarDays, eachDayOfInterval } from 'date-fns';
@@ -147,9 +148,8 @@ const ListingDetailPage = () => {
     toast.success('¡Perfil completado! Ahora puedes continuar con la reserva.');
   };
 
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const BUCKET_NAME = 'listings-images';
-  const imageUrl = listing?.images_urls?.[0] ? `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${listing.images_urls[0]}` : '/public/placeholder.svg';
+  // Get image URLs using improved helper
+  const imageUrls = getSupabaseImageUrls(listing?.images_urls);
 
   if (isLoading) return <div>Cargando...</div>;
   if (isError || !listing) return <div>Error: No se pudo encontrar el anuncio.</div>;
@@ -165,11 +165,11 @@ const ListingDetailPage = () => {
             <span>{listing.location}</span>
           </div>
           <ImageGallery
-            images={listing.images_urls && listing.images_urls.length > 0 ? listing.images_urls : [imageUrl]}
+            images={imageUrls}
             title={listing.title}
             className="mb-6"
             maxHeight="500px"
-            showThumbnails={listing.images_urls && listing.images_urls.length > 1}
+            showThumbnails={imageUrls.length > 1}
           />
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="md:col-span-3">

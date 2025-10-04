@@ -6,10 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { OptimizedImage } from '@/components/OptimizedImage';
-
-// URL de tu bucket de Supabase Storage
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const BUCKET_NAME = 'listings-images';
+import { getSupabaseImageUrl } from '@/utils/imageUtils';
 
 interface ListingCardProps {
   id: string | number;
@@ -55,10 +52,9 @@ const ListingCard: React.FC<ListingCardProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  // Construye la URL completa de la imagen desde Supabase Storage
-  const imageUrl = images && images.length > 0
-    ? `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${images[0]}`
-    : '/public/placeholder.svg';
+  // Get image URL using improved helper
+  const imageResult = getSupabaseImageUrl(images && images.length > 0 ? images[0] : null);
+  const imageUrl = imageResult.url;
 
   return (
     <Link to={`/listing/${id}`}>

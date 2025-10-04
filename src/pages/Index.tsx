@@ -19,7 +19,6 @@ const fetchListings = async () => {
     .eq('is_active', true);
 
   if (listingsError) {
-    console.error('Error fetching listings:', listingsError);
     throw new Error(listingsError.message);
   }
 
@@ -35,7 +34,6 @@ const fetchListings = async () => {
     .in('id', hostIds);
 
   if (profilesError) {
-    console.error('Error fetching profiles:', profilesError);
     // Si no podemos obtener profiles, devolvemos listings sin profile info
     return listings.map(listing => ({
       ...listing,
@@ -113,6 +111,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
       
       {/* Hero Section */}
       <section 

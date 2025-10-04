@@ -2,28 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import ListingDetailPage from "./pages/ListingDetailPage";
-import MembershipPage from "./pages/MembershipPage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
-import PaymentCancelledPage from "./pages/PaymentCancelledPage";
-import AccommodationPage from "./pages/AccommodationPage";
-import VehiclesPage from "./pages/VehiclesPage";
-import AboutPage from "./pages/AboutPage";
-import HostDashboard from "./pages/HostDashboard";
-import UserDashboard from "./pages/UserDashboard";
-import CreateListing from "./pages/CreateListing";
-import EditListing from "./pages/EditListing";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import SubscriptionsManager from "./pages/admin/SubscriptionsManager";
-import ListingsManager from "./pages/admin/ListingsManager";
-import BookingsManager from "./pages/admin/BookingsManager";
-import UsersManager from "./pages/admin/UsersManager";
-import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
-import SubscriptionManagement from "./pages/SubscriptionManagement";
+import { Suspense } from "react";
+import { PageLoader } from "@/components/LoadingSpinner";
+import AppRoutes from "@/components/AppRoutes";
 
 const queryClient = new QueryClient();
 
@@ -34,31 +17,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/listing/:id" element={<ListingDetailPage />} />
-            <Route path="/membership" element={<MembershipPage />} />
-            <Route path="/payment/success" element={<PaymentSuccessPage />} />
-            <Route path="/payment/cancelled" element={<PaymentCancelledPage />} />
-            <Route path="/accommodation" element={<AccommodationPage />} />
-            <Route path="/vehicles" element={<VehiclesPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/dashboard/host" element={<HostDashboard />} />
-            <Route path="/dashboard/user" element={<UserDashboard />} />
-            <Route path="/subscription" element={<SubscriptionManagement />} />
-            <Route path="/listings/create" element={<CreateListing />} />
-            <Route path="/listings/edit/:id" element={<EditListing />} />
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/subscriptions" element={<SubscriptionsManager />} />
-            <Route path="/admin/listings" element={<ListingsManager />} />
-            <Route path="/admin/bookings" element={<BookingsManager />} />
-            <Route path="/admin/users" element={<UsersManager />} />
-            <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
-
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <AppRoutes />
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>

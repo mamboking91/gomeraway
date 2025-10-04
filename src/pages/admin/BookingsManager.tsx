@@ -765,7 +765,7 @@ const BookingsManager: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Acción a realizar:</label>
-                <Select value={disputeAction} onValueChange={(value: any) => setDisputeAction(value)}>
+                <Select value={disputeAction} onValueChange={(value: string) => setDisputeAction(value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>

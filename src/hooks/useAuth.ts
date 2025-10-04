@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -86,7 +86,7 @@ export const useAuth = () => {
     }
   };
 
-  const updateAuthState = async (session: Session | null) => {
+  const updateAuthState = useCallback(async (session: Session | null) => {
     if (!session?.user) {
       setState({
         user: null,
@@ -121,7 +121,7 @@ export const useAuth = () => {
         error: error instanceof Error ? error.message : 'Error desconocido',
       });
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Obtener sesión inicial
@@ -137,7 +137,7 @@ export const useAuth = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [updateAuthState]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!state.user) throw new Error('No hay usuario autenticado');

@@ -109,7 +109,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
           <div className="text-center text-gray-500">
             <ImageIcon className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm">Error al cargar imagen</p>
+            <p className="text-sm">Imagen no disponible</p>
           </div>
         </div>
       )}

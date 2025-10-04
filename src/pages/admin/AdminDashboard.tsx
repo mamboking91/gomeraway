@@ -41,7 +41,7 @@ const fetchAdminStats = async (): Promise<DashboardStats> => {
 
   // 2. Contar suscripciones activas (opcional - tabla puede no existir)
   let activeSubscriptions = 0;
-  let subscriptionsByPlan = { basico: 0, premium: 0, diamante: 0 };
+  const subscriptionsByPlan = { basico: 0, premium: 0, diamante: 0 };
   
   try {
     const { data: subscriptions, error: subsError } = await supabase
